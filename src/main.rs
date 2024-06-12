@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 mod import;
 use clap::{Parser, Subcommand};
 use import::*;
