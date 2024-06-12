@@ -9,3 +9,4 @@ eframe = "0.27.2"
 egui-file-dialog = "0.5.0"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.117"
+zip = "2.1.3"

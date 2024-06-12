@@ -2,6 +2,9 @@ use std::path::PathBuf;
 use eframe::{egui::{self, Context, Layout}, App, NativeOptions, Result};
 use egui_file_dialog::FileDialog;
 
+mod import;
+use import::*;
+
 fn main() -> Result<()> {
 	let options = NativeOptions::default();
 
