@@ -7,7 +7,7 @@ use import::*;
 fn main() {
 	match execute() {
 		Ok(_) => {},
-		Err(e) => println!("<!>\n{}", e.to_string())
+		Err(e) => println!("<!>\n{:?}", e)
 	}
 }
 
