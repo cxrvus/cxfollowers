@@ -1,12 +1,44 @@
-mod app;
-use eframe::{egui::{self, Context}, Frame, NativeOptions};
-// use std::{fs, path::PathBuf};
+use std::path::PathBuf;
+use eframe::{egui::{self, Context}, App, NativeOptions, Result};
+use egui_file_dialog::FileDialog;
 
-fn main() {
+fn main() -> Result<()> {
 	let options = NativeOptions::default();
-	eframe::run_simple_native("CX Followers", options, update).unwrap();
+
+	eframe::run_native(
+		"CX Followers",
+		options,
+		Box::new(|ctx| Box::new(MyApp::new(ctx))),
+	)
 }
 
-fn update(ctx: &Context, _frame: &mut Frame) {
-	egui::CentralPanel::default().show(ctx, |ui| { app::main(ui)} );
+struct MyApp {
+	file_dialog: FileDialog,
+	selected_file: Option<PathBuf>,
+}
+
+impl MyApp {
+	pub fn new(_cc: &eframe::CreationContext) -> Self {
+		Self {
+			file_dialog: FileDialog::new(),
+			selected_file: None,
+		}
+	}
+}
+
+impl App for MyApp {
+	fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+		ctx.set_pixels_per_point(1.5);
+		egui::CentralPanel::default().show(ctx, |ui| {
+			if ui.button("select ZIP file").clicked() {
+				self.file_dialog.select_file();
+			}
+
+			ui.label(format!("selected file: {:?}", self.selected_file));
+
+			if let Some(path) = self.file_dialog.update(ctx).selected() {
+				self.selected_file = Some(path.to_path_buf());
+			}
+		});
+	}
 }
