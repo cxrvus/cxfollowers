@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use eframe::{egui::{self, Context}, App, NativeOptions, Result};
+use eframe::{egui::{self, Context, Layout}, App, NativeOptions, Result};
 use egui_file_dialog::FileDialog;
 
 fn main() -> Result<()> {
@@ -30,15 +30,17 @@ impl App for MyApp {
 	fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
 		ctx.set_pixels_per_point(1.5);
 		egui::CentralPanel::default().show(ctx, |ui| {
-			if ui.button("select ZIP file").clicked() {
-				self.file_dialog.select_file();
-			}
+			ui.with_layout(Layout::top_down(egui::Align::Center), |ui| {
+				if ui.button("import ZIP file").clicked() {
+					self.file_dialog.select_file();
+				}
 
-			ui.label(format!("selected file: {:?}", self.selected_file));
+				ui.label(format!("file: {:?}", self.selected_file));
 
-			if let Some(path) = self.file_dialog.update(ctx).selected() {
-				self.selected_file = Some(path.to_path_buf());
-			}
+				if let Some(path) = self.file_dialog.update(ctx).selected() {
+					self.selected_file = Some(path.to_path_buf());
+				}
+			});
 		});
 	}
 }
