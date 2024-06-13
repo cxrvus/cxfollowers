@@ -10,8 +10,10 @@ const EXAMPLE_FILE_NAME: &str = "instagram-my_username-2021-01-01-aBcD1X2Y.zip";
 mod paths {
 	pub const DATA: &str = "data";
 	pub const TMP: &str = "tmp_data";
-	pub const ZIPS: &str = "data/zips";
-	pub const IMPORTS: &str = "data/imports";
+	pub const ZIPS: &str = "zips";
+	pub const IMPORTS: &str = "imports";
+	pub const CONNECTIONS: &str = "connections";
+	pub const TARGET_DATA: &str = "followers_and_following";
 }
 
 use paths::*;
@@ -20,6 +22,7 @@ pub fn import_zip(path: PathBuf) -> Result<()> {
 	create_all_folders()?;
 	validate_file(&path)?;
 	extract_zip(path)?;
+	let _target_data_path = validate_extract()?;
 
 	Ok(())
 }
@@ -28,8 +31,8 @@ fn create_all_folders() -> Result<()> {
 	fs::remove_dir_all(TMP).ok();
 	create_folder(TMP)?;
 	create_folder(DATA)?;
-	create_folder(ZIPS)?;
-	create_folder(IMPORTS)?;
+	create_folder(&format!("{DATA}/{ZIPS}"))?;
+	create_folder(&format!("{DATA}/{IMPORTS}"))?;
 	Ok(())
 }
 
@@ -63,13 +66,15 @@ fn extract_zip(path: PathBuf) -> Result<()> {
 	let mut archive = zip::ZipArchive::new(reader)?;
 	archive.extract(TMP)?;
 
-	validate_extract()?;
-
 	Ok(())
 }
 
-fn validate_extract() -> Result<()> {
-	// continue
+fn validate_extract() -> Result<PathBuf> {
+	let connections = PathBuf::from(TMP).join(CONNECTIONS);
+	if !connections.exists() { return Err(anyhow!("Connections folder not found")); }
 
-	Ok(())
+	let target_data = connections.join(TARGET_DATA);
+	if !target_data.exists() { return Err(anyhow!("followers_and_following folder not found")); }
+
+	Ok(target_data)
 }
