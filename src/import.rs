@@ -45,6 +45,15 @@ pub fn import_zip(path: PathBuf) -> Result<()> {
 	extract_zip(&path, &paths.extract)?;
 	validate_extract(&paths)?;
 
+	let file_name = path.file_name().unwrap();
+	let target_zip_dir = PathBuf::from(&paths.zips).join(file_name);
+	fs::copy(&path, &target_zip_dir)?;
+
+	let file_stem = &path.file_stem().unwrap();
+	let target_imports_dir = PathBuf::from(&paths.imports).join(file_stem);
+	fs::create_dir(&target_imports_dir)?;
+	fs::copy(&paths.follower_data, &target_imports_dir)?;
+
 	Ok(())
 }
 
@@ -77,8 +86,8 @@ fn validate_zip(path: &PathBuf) -> Result<()> {
 	Ok(())
 }
 
-fn extract_zip(path: PathBuf, target_path: &str) -> Result<()> {
-	let file_name = path.file_name().unwrap_or_default();
+fn extract_zip(path: &PathBuf, target_path: &str) -> Result<()> {
+	let file_name = path.file_name().unwrap();
 	let destination = PathBuf::from(target_path).join(file_name);
 	fs::copy(&path, &destination)?;
 
