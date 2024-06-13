@@ -14,4 +14,4 @@ Cargo.lock
 *.pdb
 
 data/
-tmp_data/
+extract/

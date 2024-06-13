@@ -7,32 +7,53 @@ const DIR: &str = ".";
 const ZIP_PATTERN: &str = r#"instagram-.+?-\d{4}-\d{2}-\d{2}-\w{8}\.zip"#;
 const EXAMPLE_FILE_NAME: &str = "instagram-my_username-2021-01-01-aBcD1X2Y.zip";
 
-mod paths {
-	pub const DATA: &str = "data";
-	pub const TMP: &str = "tmp_data";
-	pub const ZIPS: &str = "zips";
-	pub const IMPORTS: &str = "imports";
-	pub const CONNECTIONS: &str = "connections";
-	pub const TARGET_DATA: &str = "followers_and_following";
+struct Paths {
+	data: String,
+	extract: String,
+	zips: String,
+	imports: String,
+	connections: String,
+	follower_data: String,
 }
 
-use paths::*;
+impl Paths {
+	fn new(dir: &str) -> Self {
+		let data = format!("{dir}/data");
+		let zips = format!("{data}/zips");
+		let imports = format!("{data}/imports");
+
+		let extract = format!("{dir}/extract");
+		let connections = format!("{extract}/connections");
+		let follower_data = format!("{connections}/followers_and_following");
+
+		Self {
+			data,
+			extract,
+			zips,
+			imports,
+			connections,
+			follower_data
+		}
+	}
+}
 
 pub fn import_zip(path: PathBuf) -> Result<()> {
-	create_all_folders()?;
-	validate_file(&path)?;
-	extract_zip(path)?;
-	let _target_data_path = validate_extract()?;
+	let paths = Paths::new(DIR);
+
+	create_all_folders(&paths)?;
+	validate_zip(&path)?;
+	extract_zip(&path, &paths.extract)?;
+	validate_extract(&paths)?;
 
 	Ok(())
 }
 
-fn create_all_folders() -> Result<()> {
-	fs::remove_dir_all(TMP).ok();
-	create_folder(TMP)?;
-	create_folder(DATA)?;
-	create_folder(&format!("{DATA}/{ZIPS}"))?;
-	create_folder(&format!("{DATA}/{IMPORTS}"))?;
+fn create_all_folders(paths: &Paths) -> Result<()> {
+	fs::remove_dir_all(&paths.extract).ok();
+	create_folder(&paths.extract)?;
+	create_folder(&paths.data)?;
+	create_folder(&paths.zips)?;
+	create_folder(&paths.imports)?;
 	Ok(())
 }
 
@@ -42,7 +63,7 @@ fn create_folder(path: &str) -> Result<()> {
 	Ok(())
 }
 
-fn validate_file(path: &PathBuf) -> Result<()> {
+fn validate_zip(path: &PathBuf) -> Result<()> {
 	if !path.exists() { return Err(anyhow!("File not found: {:?}", path)); }
 	if !path.is_file() { return Err(anyhow!("Not a file: {:?}", path)); }
 
@@ -56,25 +77,21 @@ fn validate_file(path: &PathBuf) -> Result<()> {
 	Ok(())
 }
 
-fn extract_zip(path: PathBuf) -> Result<()> {
+fn extract_zip(path: PathBuf, target_path: &str) -> Result<()> {
 	let file_name = path.file_name().unwrap_or_default();
-	let destination = PathBuf::from(TMP).join(file_name);
+	let destination = PathBuf::from(target_path).join(file_name);
 	fs::copy(&path, &destination)?;
 
 	let file = fs::File::open(destination)?;
 	let reader = std::io::BufReader::new(file);
 	let mut archive = zip::ZipArchive::new(reader)?;
-	archive.extract(TMP)?;
+	archive.extract(target_path)?;
 
 	Ok(())
 }
 
-fn validate_extract() -> Result<PathBuf> {
-	let connections = PathBuf::from(TMP).join(CONNECTIONS);
-	if !connections.exists() { return Err(anyhow!("Connections folder not found")); }
-
-	let target_data = connections.join(TARGET_DATA);
-	if !target_data.exists() { return Err(anyhow!("followers_and_following folder not found")); }
-
-	Ok(target_data)
+fn validate_extract(paths: &Paths) -> Result<()> {
+	if !PathBuf::from(&paths.connections).exists() { return Err(anyhow!("Connections folder not found")); }
+	if !PathBuf::from(&paths.follower_data).exists() { return Err(anyhow!("followers_and_following folder not found")); }
+	Ok(())
 }
