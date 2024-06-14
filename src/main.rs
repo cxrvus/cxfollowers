@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 mod import;
 use clap::{Parser, Subcommand};
-use import::*;
+mod parser;
 
 fn main() {
 	match execute() {
@@ -35,7 +35,7 @@ fn execute() -> Result<()> {
 
 	match cli.command {
 		Command::Import(args) => {
-			import_zip(args.path)?;
+			import::import_zip(args.path)?;
 		}
 	}
 
