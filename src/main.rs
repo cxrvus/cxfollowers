@@ -1,44 +1,43 @@
 use std::path::PathBuf;
-use eframe::{egui::{self, Context}, App, NativeOptions, Result};
-use egui_file_dialog::FileDialog;
+use anyhow::Result;
+mod import;
+use clap::{Parser, Subcommand};
+use import::*;
 
-fn main() -> Result<()> {
-	let options = NativeOptions::default();
-
-	eframe::run_native(
-		"CX Followers",
-		options,
-		Box::new(|ctx| Box::new(MyApp::new(ctx))),
-	)
+fn main() {
+	match execute() {
+		Ok(_) => {},
+		Err(e) => println!("<!>\n{:?}", e)
+	}
 }
 
-struct MyApp {
-	file_dialog: FileDialog,
-	selected_file: Option<PathBuf>,
+#[derive(Parser)]
+#[command(version, about)]
+struct Cli {
+	#[command(subcommand)]
+	pub command: Command
 }
 
-impl MyApp {
-	pub fn new(_cc: &eframe::CreationContext) -> Self {
-		Self {
-			file_dialog: FileDialog::new(),
-			selected_file: None,
+#[derive(Subcommand)]
+enum Command {
+	#[clap(name = "import", about = "import a ZIP file")]
+	Import(ImportArgs)
+}
+
+#[derive(Parser)]
+struct ImportArgs {
+	#[arg(required = true)]
+	path: PathBuf
+}
+
+fn execute() -> Result<()> {
+	let cli = Cli::try_parse()?;
+
+	match cli.command {
+		Command::Import(args) => {
+			import_zip(args.path)?;
 		}
 	}
-}
 
-impl App for MyApp {
-	fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
-		ctx.set_pixels_per_point(1.5);
-		egui::CentralPanel::default().show(ctx, |ui| {
-			if ui.button("select ZIP file").clicked() {
-				self.file_dialog.select_file();
-			}
-
-			ui.label(format!("selected file: {:?}", self.selected_file));
-
-			if let Some(path) = self.file_dialog.update(ctx).selected() {
-				self.selected_file = Some(path.to_path_buf());
-			}
-		});
-	}
+	Ok(())
 }
