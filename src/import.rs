@@ -37,26 +37,26 @@ impl Paths {
 	}
 }
 
-pub fn import_zip(path: PathBuf) -> Result<()> {
+pub fn import_zip(src_path: PathBuf) -> Result<()> {
 	let paths = Paths::new(DIR);
 
 	create_all_folders(&paths)?;
-	validate_zip(&path)?;
-	extract_zip(&path, &paths.extract)?;
+	validate_zip(&src_path)?;
+	extract_zip(&src_path, &paths.extract)?;
 	validate_extract(&paths)?;
 
-	let file_name = path.file_name().unwrap();
-	let target_zip_dir = PathBuf::from(&paths.zips).join(file_name);
-	fs::copy(&path, &target_zip_dir)?;
+	let file_name = src_path.file_name().unwrap();
+	let dst_zip_dir = PathBuf::from(&paths.zips).join(file_name);
+	fs::copy(&src_path, &dst_zip_dir)?;
 
-	let file_stem = &path.file_stem().unwrap();
-	let target_imports_dir = PathBuf::from(&paths.imports).join(file_stem);
-	fs::create_dir(&target_imports_dir)?;
+	let file_stem = &src_path.file_stem().unwrap();
+	let dst_imports_dir = PathBuf::from(&paths.imports).join(file_stem);
+	fs::create_dir(&dst_imports_dir)?;
 	
 	for entry in fs::read_dir(&paths.follower_data)? {
 		let entry = entry?;
-		let target = target_imports_dir.join(entry.file_name());
-		fs::copy(&entry.path(), target)?;
+		let dst_path = dst_imports_dir.join(entry.file_name());
+		fs::copy(&entry.path(), dst_path)?;
 	};
 
 	Ok(())
@@ -77,29 +77,29 @@ fn create_folder(path: &str) -> Result<()> {
 	Ok(())
 }
 
-fn validate_zip(path: &PathBuf) -> Result<()> {
-	if !path.exists() { return Err(anyhow!("File not found: {:?}", path)); }
-	if !path.is_file() { return Err(anyhow!("Not a file: {:?}", path)); }
+fn validate_zip(src_path: &PathBuf) -> Result<()> {
+	if !src_path.exists() { return Err(anyhow!("File not found: {:?}", src_path)); }
+	if !src_path.is_file() { return Err(anyhow!("Not a file: {:?}", src_path)); }
 
-	let extension = path.extension().unwrap_or_default();
-	if extension != "zip" { return Err(anyhow!("Not a ZIP file: {:?}", path)); }
+	let extension = src_path.extension().unwrap_or_default();
+	if extension != "zip" { return Err(anyhow!("Not a ZIP file: {:?}", src_path)); }
 
-	let file_name = path.file_name().unwrap_or_default().to_str().unwrap_or_default();
+	let file_name = src_path.file_name().unwrap_or_default().to_str().unwrap_or_default();
 	let file_name_valid = Regex::new(ZIP_PATTERN).unwrap().is_match(file_name);
 	if !file_name_valid { return Err(anyhow!("Invalid ZIP file name: {file_name}\nExample file name: {}", EXAMPLE_FILE_NAME)); }
 
 	Ok(())
 }
 
-fn extract_zip(path: &PathBuf, target_path: &str) -> Result<()> {
-	let file_name = path.file_name().unwrap();
-	let destination = PathBuf::from(target_path).join(file_name);
-	fs::copy(&path, &destination)?;
+fn extract_zip(src_path: &PathBuf, extracts_dir: &str) -> Result<()> {
+	let file_name = src_path.file_name().unwrap();
+	let dst_path = PathBuf::from(extracts_dir).join(file_name);
+	fs::copy(&src_path, &dst_path)?;
 
-	let file = fs::File::open(destination)?;
+	let file = fs::File::open(dst_path)?;
 	let reader = std::io::BufReader::new(file);
 	let mut archive = zip::ZipArchive::new(reader)?;
-	archive.extract(target_path)?;
+	archive.extract(extracts_dir)?;
 
 	Ok(())
 }
