@@ -52,7 +52,12 @@ pub fn import_zip(path: PathBuf) -> Result<()> {
 	let file_stem = &path.file_stem().unwrap();
 	let target_imports_dir = PathBuf::from(&paths.imports).join(file_stem);
 	fs::create_dir(&target_imports_dir)?;
-	fs::copy(&paths.follower_data, &target_imports_dir)?;
+	
+	for entry in fs::read_dir(&paths.follower_data)? {
+		let entry = entry?;
+		let target = target_imports_dir.join(entry.file_name());
+		fs::copy(&entry.path(), target)?;
+	};
 
 	Ok(())
 }
